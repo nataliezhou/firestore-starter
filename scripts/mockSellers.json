@@ -111,7 +111,7 @@
       "name": "Fresh Eggs",
       "description": "Farm fresh eggs from free-range chickens",
       "price": 4.99,
-      "image": "https://images.unsplash.com/photo-1569288063648-5d2194db4b13?w=300&h=200&fit=crop",
+      "image": "https://cdn.britannica.com/94/151894-050-F72A5317/Brown-eggs.jpg",
       "category": "Dairy",
       "organic": true,
       "local": true,

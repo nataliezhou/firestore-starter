@@ -49,6 +49,7 @@ const addProductToStore = async (product) => {
     await addDoc(collection(db, 'products'), product);
 }   
 
+
 /**
  * Adds a list of generated sellers to Firestore database.
  * @param {Seller[]} sellersArr
@@ -98,24 +99,37 @@ const addMockSellers = async (dataFile) => {
  */
 const addMockProducts = async (dataFile) => {
     await deleteCollection('products');
+
+     // Create a map for quick seller lookup by ID
+    const sellersMap = new Map();
+    dataFile.sellers.forEach(seller => {
+      sellersMap.set(seller.id, {
+        name: seller.name,
+        image: seller.image,
+      });
+    });
+
     const products = [];
 
-  dataFile.allProducts.forEach(product => {
+    dataFile.allProducts.forEach(product => {
 
-    // Creating mock data for keys that don't exist in the source data
-    const numRatings = Math.floor(Math.random() * 500) + 50; // Random number between 50 and 550
-    const avgRating = (Math.random() * 2) + 3; // Random number between 3.0 and 5.0
+      // get relevant product info
+      const seller = sellersMap.get(product.sellerId);
+      const numRatings = Math.floor(Math.random() * 500) + 50; // Random number between 50 and 550
+      const avgRating = (Math.random() * 2) + 3; // Random number between 3.0 and 5.0
 
-    products.push({
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      numRatings: numRatings,
-      avgRating: parseFloat(avgRating.toFixed(2)),
-      photo: product.image,
+      products.push({
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        numRatings: numRatings,
+        avgRating: parseFloat(avgRating.toFixed(2)),
+        photo: product.image,
+        sellerId: product.sellerId,
+        sellerName: seller ? seller.name : 'Unknown',
+        sellerImage: seller ? seller.image : '',
+      });
     });
-  });
-
   try {
   // now add to firestore
     const promises = products.map(product => {
@@ -131,7 +145,8 @@ const addMockProducts = async (dataFile) => {
 
 
 const main = async () => {
-  await Promise.all([addMockSellers(mockData), addMockProducts(mockData)]);
+  await addMockSellers(mockData);
+  await addMockProducts(mockData);
   console.log(`Successfully added sellers and products to Firestore.`);
 };
 
