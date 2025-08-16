@@ -1,6 +1,25 @@
-import { db } from '../src/firebase.js'
+import 'dotenv/config' // Load environment variables
+
+import { initializeApp } from 'firebase/app'; // Import initializeApp
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore/lite'; // Import necessary Firestore functions
+
 import mockData from './mockSellers.json' with { type: "json" }
-import { addDoc, collection, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
+
+// Define firebaseConfig using process.env (Node.js environment)
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET, // need to use process instead of meta bc nodejs vs vite
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID, // Ensure this matches your .env
+};
+
+
+// Initialize Firebase app and Firestore for this script
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 /**
  * @param {FirebaseFirestore.Firestore} db 

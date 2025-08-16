@@ -91,6 +91,7 @@ export default {
   async mounted() {
     this.isAuthenticated = isAuthenticated()
     await this.loadProducts()
+    console.log('Products:', this.products)
   },
   methods: {
     async loadProducts() {
