@@ -13,6 +13,7 @@
   "dependencies": {
     "dotenv": "^17.2.1",
     "firebase": "^10.14.1",
+    "imgur": "^2.5.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4"
   },

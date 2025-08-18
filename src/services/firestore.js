@@ -10,7 +10,9 @@ import {
   where, 
   orderBy,
   serverTimestamp 
-} from 'firebase/firestore'
+} from 'firebase/firestore';
+
+
 import { db } from '../firebase'
 
 // Products Collection
@@ -31,6 +33,15 @@ export const getProducts = async () => {
     throw error
   }
 }
+
+export const addProduct = async (productData) => {
+  try {
+    await addDoc(collection(db, 'products'), productData);
+  } catch (error) {
+    console.error('Error adding product:', error);
+    throw error;
+  }
+};
 
 export const getProductById = async (productId) => {
   try {

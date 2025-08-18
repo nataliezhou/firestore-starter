@@ -35,13 +35,19 @@
     </div>
 
     <div v-else class="products-grid">
+      <router-link to="/sell" class="add-product-card card">
+        <div class="add-product-card-content">
+          <span class="plus-icon">+</span>
+          <h3>List Your Product</h3>
+          <p>Join our community of sellers.</p>
+        </div>
+      </router-link>
       <div 
-        v-for="product in filteredProducts" 
-        :key="product.id" 
+        v-for="product in filteredProducts" :key="product.id" 
         class="product-card card"
       >
         <div class="product-image">
-          <img :src="product.photo" :alt="product.name">
+          <img :src="product.image" :alt="product.name">
         </div>
         <div class="product-info">
           <h3>{{ product.name }}</h3>
@@ -91,7 +97,6 @@ export default {
   async mounted() {
     this.isAuthenticated = isAuthenticated()
     await this.loadProducts()
-    console.log('Products:', this.products)
   },
   methods: {
     async loadProducts() {
@@ -218,12 +223,32 @@ export default {
   transition: all 0.3s;
 }
 
-.filter-btn:hover,
-.filter-btn.active {
-  background: #4CAF50;
-  color: white;
+/* Style for the 'All' category button */
+.filter-btn:first-child {
+  border-color: #ccc;
+  color: #666;
 }
 
+.filter-btn:first-child.active {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* Styles for category buttons other than 'All' */
+.filter-btn:not(:first-child):hover,
+.filter-btn:not(:first-child).active {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* Remove the old sell button style */
+/*
+.sell-button {
+  background-color: #ff9800; 
+}
+*/
 .loading, .error, .no-products {
   text-align: center;
   padding: 2rem;
@@ -302,4 +327,46 @@ export default {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+/* Card for adding a new product */
+.add-product-card {
+ display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+ background-color: #E8F5E9;
+ border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.add-product-card:hover {
+ background-color: #d7e9d8;
+}
+
+.add-product-card-content {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.add-product-card-content h3 {
+  color: black;
+  margin-bottom: 0.5rem;
+}
+
+.plus-icon {
+  font-weight: bold;
+  font-size: 60px; /* Larger plus sign */
+ color: #42b983;
+}
+
+.add-product-card-content p {
+  font-size: 15px; /* Slightly larger subtext font size */
+ color: #555;
+}
 </style>
+
+

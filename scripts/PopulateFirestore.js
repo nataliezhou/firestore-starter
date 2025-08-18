@@ -94,7 +94,7 @@ const addMockSellers = async (dataFile) => {
       city: city,
       numRatings: numRatings,
       avgRating: parseFloat(avgRating.toFixed(2)),
-      photo: seller.image,
+      image: seller.image,
     });
   });
 
@@ -143,7 +143,7 @@ const addMockProducts = async (dataFile) => {
         price: product.price,
         numRatings: numRatings,
         avgRating: parseFloat(avgRating.toFixed(2)),
-        photo: product.image,
+        image: product.image,
         sellerId: product.sellerId,
         sellerName: seller ? seller.name : 'Unknown',
         sellerImage: seller ? seller.image : '',

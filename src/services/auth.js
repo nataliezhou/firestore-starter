@@ -77,3 +77,8 @@ export const isAuthenticated = () => {
 export const getUserId = () => {
   return currentUser?.uid
 }
+
+// Get user display name
+export const getUserDisplayName = () => {
+  return currentUser?.displayName
+}
