@@ -96,6 +96,35 @@ export const searchProducts = async (searchTerm) => {
   }
 }
 
+export const filterProducts = async (filters) => {
+  try {
+    let productQuery = query(productsCollection);
+
+    if (filters.minPrice !== undefined && filters.minPrice !== null) {
+      productQuery = query(productQuery, where('price', '>=', filters.minPrice));
+    }
+    if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
+      productQuery = query(productQuery, where('price', '<=', filters.maxPrice));
+    }
+    if (filters.minRating !== undefined && filters.minRating !== null) {
+      productQuery = query(productQuery, where('avgRating', '>=', filters.minRating));
+    }
+    if (filters.category && filters.category !== 'All') {
+      productQuery = query(productQuery, where('category', '==', filters.category));
+    }
+
+    const querySnapshot = await getDocs(productQuery);
+    console.log("products have filtered")
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error filtering products:', error);
+    throw error;
+  }
+};
+
 // Seller Operations
 export const getSellerById = async (sellerId) => {
   try {

@@ -11,6 +11,7 @@
           class="search-input"
           @input="handleSearch"
         >
+        <button class="btn" @click="openFilterPopup">Filter</button>
         <button class="btn" @click="handleSearch">Search</button>
       </div>
     </div>
@@ -70,6 +71,12 @@
       </div>
     </div>
 
+    <FilterPopup 
+      :isVisible="isFilterPopupVisible"
+      @apply-filters="applyFilters"
+      @close="closeFilterPopup"
+    />
+
     <div v-if="filteredProducts.length === 0 && !loading" class="no-products">
       <p>No products found. Try adjusting your search or filters.</p>
     </div>
@@ -77,54 +84,38 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory, searchProducts, addToCart } from '../services/firestore'
-import { isAuthenticated, getUserId } from '../services/auth'
+import { getProducts, getProductsByCategory, searchProducts, addToCart, filterProducts } from '../services/firestore';
+import { isAuthenticated, getUserId } from '../services/auth';
+import FilterPopup from '../components/FilterPopup.vue';
 
 export default {
   name: 'Home',
+  components: { FilterPopup }, // Register FilterPopup
   data() {
     return {
       searchQuery: '',
       selectedCategory: 'All',
       categories: ['All', 'Vegetables', 'Fruits', 'Bakery', 'Dairy', 'Meat', 'Herbs'],
-      products: [],
       filteredProducts: [],
       loading: false,
       error: null,
-      isAuthenticated: false
-    }
+      isAuthenticated: false,
+      isFilterPopupVisible: false, // Added filter popup visibility
+    };
   },
   async mounted() {
     this.isAuthenticated = isAuthenticated()
-    await this.loadProducts()
+    // Load initial products or apply default filters if needed
+    await this.applyFilters({}) // Load all products initially
   },
   methods: {
     async loadProducts() {
-      this.loading = true
-      this.error = null
-      
-      try {
-        this.products = await getProducts()
-        this.filteredProducts = this.products
-      } catch (error) {
-        this.error = 'Failed to load products. Please try again.'
-        console.error('Error loading products:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async handleCategoryFilter(category) {
-      this.selectedCategory = category
-      this.loading = true
-      
       try {
         if (category === 'All') {
-          this.products = await getProducts()
+          this.filteredProducts = await getProducts()
         } else {
-          this.products = await getProductsByCategory(category)
+          this.filteredProducts = await getProductsByCategory(category)
         }
-        this.filteredProducts = this.products
       } catch (error) {
         this.error = 'Failed to filter products. Please try again.'
         console.error('Error filtering products:', error)
@@ -135,7 +126,7 @@ export default {
 
     async handleSearch() {
       if (!this.searchQuery.trim()) {
-        this.filteredProducts = this.products
+        // If search query is empty, show all products or apply current filters
         return
       }
       
@@ -165,6 +156,22 @@ export default {
         alert('Failed to add to cart. Please try again.')
         console.error('Error adding to cart:', error)
       }
+    },
+
+    openFilterPopup() {
+      this.isFilterPopupVisible = true;
+    },
+
+    closeFilterPopup() {
+      this.isFilterPopupVisible = false;
+    },
+
+    async applyFilters(filters) {
+      this.loading = true;
+      this.error = null;
+      this.filteredProducts = await filterProducts(filters); // Use the new filterProducts function
+      this.loading = false;
+      this.closeFilterPopup();
     }
   }
 }
