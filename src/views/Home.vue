@@ -71,6 +71,12 @@
       </div>
     </div>
 
+    <div v-if="hasMore && filteredProducts.length > 0" class="text-center mt-4">
+      <button @click="loadMoreProducts" class="btn">Load More</button>
+    </div>
+
+
+
     <FilterPopup 
       :isVisible="isFilterPopupVisible"
       @apply-filters="applyFilters"
@@ -101,6 +107,8 @@ export default {
       error: null,
       isAuthenticated: false,
       isFilterPopupVisible: false, // Added filter popup visibility
+      lastDoc: null, // To store the last fetched document for pagination
+      hasMore: true, // To indicate if there are more products to load
     };
   },
   async mounted() {
@@ -166,10 +174,24 @@ export default {
       this.isFilterPopupVisible = false;
     },
 
-    async applyFilters(filters) {
+    async applyFilters(filters, loadMore = false) {
       this.loading = true;
       this.error = null;
-      this.filteredProducts = await filterProducts(filters); // Use the new filterProducts function
+      
+      try {
+        const newProducts = await filterProducts(filters, loadMore ? this.lastDoc : null);
+        if (loadMore) {
+          this.filteredProducts = [...this.filteredProducts, ...newProducts];
+        } else {
+          this.filteredProducts = newProducts;
+        }
+        this.hasMore = newProducts.length === 20; // Assuming page size is 20
+        if (newProducts.length > 0) {
+          this.lastDoc = newProducts[newProducts.length - 1];
+        }
+      } catch (error) {
+        this.error = 'Failed to load products. Please try again.';
+      }
       this.loading = false;
       this.closeFilterPopup();
     }

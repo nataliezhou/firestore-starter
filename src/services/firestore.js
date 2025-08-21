@@ -7,9 +7,11 @@ import {
   updateDoc, 
   deleteDoc, 
   query, 
-  where, 
+  where,
+  limit,
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  startAfter
 } from 'firebase/firestore';
 
 
@@ -21,17 +23,25 @@ export const sellersCollection = collection(db, 'sellers')
 export const cartsCollection = collection(db, 'carts')
 
 // Product Operations
-export const getProducts = async () => {
+export const getProducts = async (lastDoc = null) => {
   try {
-    const querySnapshot = await getDocs(productsCollection)
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
+    let productsQuery = query(
+      productsCollection,
+      orderBy('createdAt', 'desc'), // Order by createdAt descending
+      limit(20) // Limit to 20 results
+    );
+  if (lastDoc) {
+    productsQuery = query(productsQuery, startAfter(lastDoc));
+    }
+      const querySnapshot = await getDocs(productsQuery)
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
   } catch (error) {
     console.error('Error getting products:', error)
     throw error
-  }
+    }
 }
 
 export const addProduct = async (productData) => {
@@ -97,10 +107,9 @@ export const searchProducts = async (searchTerm) => {
 }
 
 export const filterProducts = async (filters) => {
-  try {
+  try {   
     let productQuery = query(productsCollection);
-
-    if (filters.minPrice !== undefined && filters.minPrice !== null) {
+    if (filters.minPrice !== undefined && filters.minPrice !== null) {     
       productQuery = query(productQuery, where('price', '>=', filters.minPrice));
     }
     if (filters.maxPrice !== undefined && filters.maxPrice !== null) {

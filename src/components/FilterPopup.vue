@@ -69,6 +69,8 @@ export default {
           activeFilters[key] = this.filters[key];
         }
       }
+      activeFilters.minPrice = this.priceRange[0];
+ activeFilters.maxPrice = this.priceRange[1];
       this.$emit('apply-filters', activeFilters);
       this.closePopup();
     },

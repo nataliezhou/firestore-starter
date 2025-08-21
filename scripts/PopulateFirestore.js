@@ -1,10 +1,8 @@
 import 'dotenv/config' // Load environment variables
 
 import { initializeApp } from 'firebase/app'; // Import initializeApp
-import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore/lite'; // Import necessary Firestore functions
-
-import mockData from './mockSellers.json' with { type: "json" }
-
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, terminate } from 'firebase/firestore'; // Import necessary Firestore functions, including serverTimestamp and terminate
+import mockData from './mockSellers.json' with { type: "json" };
 // Define firebaseConfig using process.env (Node.js environment)
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY,
@@ -55,7 +53,7 @@ async function deleteQueryBatch(query) {
 
   if (batchSize === 500) {
     await new Promise(resolve => process.nextTick(resolve));
-    await deleteQueryBatch(db, query);
+    await deleteQueryBatch(query);
   }
 }
 
@@ -69,8 +67,9 @@ const addProductToStore = async (product) => {
 }   
 
 
+
 /**
- * Adds a list of generated sellers to Firestore database.
+ * Adds a list of sellers to Firestore database.
  * @param {Seller[]} sellersArr
  * @returns {Promise[]} List of promises
  */
@@ -111,10 +110,11 @@ const addMockSellers = async (dataFile) => {
   } 
 };
 
+
 /**
- * Adds a list of generated products to Firestore database.
+ * Adds a list of products to Firestore database.
  * @param {Product[]} productsArr
- * @returns {Promise[]} List of promises
+ * @param {Seller[]} sellers The list of sellers to get seller name and image
  */
 const addMockProducts = async (dataFile) => {
     await deleteCollection('products');
@@ -147,10 +147,10 @@ const addMockProducts = async (dataFile) => {
         sellerId: product.sellerId,
         sellerName: seller ? seller.name : 'Unknown',
         sellerImage: seller ? seller.image : '',
+        createdAt: serverTimestamp(),
       });
     });
   try {
-  // now add to firestore
     const promises = products.map(product => {
         return addProductToStore(product);
     });
@@ -164,9 +164,9 @@ const addMockProducts = async (dataFile) => {
 
 
 const main = async () => {
-  await addMockSellers(mockData);
-  await addMockProducts(mockData);
+  await Promise.all([addMockSellers(mockData), addMockProducts(mockData)]);
   console.log(`Successfully added sellers and products to Firestore.`);
+  await terminate(db);
 };
 
 main();

@@ -8,15 +8,18 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "populate": "node scripts/PopulateFirestore.js"
+    "populate": "node scripts/PopulateFirestore.js",
+    "generate": "node scripts/generateMockData.js"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
     "firebase": "^10.14.1",
     "imgur": "^2.5.0",
-    "vue-slider-component": "^4.0.0-beta.7",
+    "node-fetch": "^3.3.2",
+    "unsplash-js": "^7.0.19",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "vue-router": "^4.2.4",
+    "vue-slider-component": "^4.0.0-beta.7"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
