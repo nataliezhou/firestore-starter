@@ -148,6 +148,7 @@ const addMockProducts = async (dataFile) => {
         sellerId: product.sellerId,
         sellerName: seller ? seller.name : 'Unknown',
         sellerImage: seller ? seller.image : '',
+        stock: Math.floor(Math.random() * 10) + 1, // Random number between 1 and 100
         createdAt: serverTimestamp(),
       });
     });

@@ -22,6 +22,7 @@ export const productsCollection = collection(db, 'products')
 export const sellersCollection = collection(db, 'sellers')
 export const cartsCollection = collection(db, 'carts')
 
+
 // Product Operations
 export const getProducts = async (lastDoc = null) => {
   try {
@@ -53,22 +54,6 @@ export const addProduct = async (productData) => {
   }
 };
 
-export const getProductById = async (productId) => {
-  try {
-    const docRef = doc(db, 'products', productId)
-    const docSnap = await getDoc(docRef)
-    
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() }
-    } else {
-      throw new Error('Product not found')
-    }
-  } catch (error) {
-    console.error('Error getting product:', error)
-    throw error
-  }
-}
-
 export const getProductsByCategory = async (category) => {
   try {
     const q = query(
@@ -87,23 +72,13 @@ export const getProductsByCategory = async (category) => {
   }
 }
 
-export const searchProducts = async (searchTerm) => {
-  try {
-    const querySnapshot = await getDocs(productsCollection)
-    const products = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-    
-    return products.filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sellerName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  } catch (error) {
-    console.error('Error searching products:', error)
-    throw error
-  }
+export const searchProducts = (products, searchTerm) => {
+  return products.filter(product => 
+ product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+ product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.sellerName && product.sellerName.toLowerCase().includes(searchTerm.toLowerCase())) // Added check for sellerName
+ )
+
 }
 
 export const filterProducts = async (filters) => {
@@ -187,6 +162,22 @@ export const getCart = async (userId) => {
 
 export const addToCart = async (userId, product) => {
   try {
+    // Check product stock
+    const productRef = doc(db, 'products', product.id);
+    const productSnap = await getDoc(productRef);
+
+    if (!productSnap.exists()) {
+      throw new Error('Product not found.');
+    }
+
+    const productData = productSnap.data();
+    let currentStock = productData.stock || 0;
+
+    if (currentStock <= 0) {
+      throw new Error('Product is out of stock.');
+    }
+
+    // Add to user's cart
     const q = query(cartsCollection, where('userId', '==', userId))
     const querySnapshot = await getDocs(q)
     
@@ -226,6 +217,15 @@ export const addToCart = async (userId, product) => {
         updatedAt: serverTimestamp()
       })
     }
+
+    // Decrement product stock
+    const newStock = currentStock - 1;
+    if (newStock === 0) {
+      await deleteDoc(productRef);
+    } else {
+      await updateDoc(productRef, { stock: newStock });
+    }
+
   } catch (error) {
     console.error('Error adding to cart:', error)
     throw error

@@ -3,16 +3,9 @@
     <div class="hero">
       <h1>Fresh Local Food</h1>
       <p>Support local farmers, bakers, and artisans in your community</p>
-      <div class="search-container">
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="Search for products..."
-          class="search-input"
-          @input="handleSearch"
-        >
+      <div>
         <button class="btn" @click="openFilterPopup">Filter</button>
-        <button class="btn" @click="handleSearch">Search</button>
+        <!-- <button class="btn" @click="handleSearch">Search</button> -->
       </div>
     </div>
 
@@ -53,6 +46,7 @@
         <div class="product-info">
           <h3>{{ product.name }}</h3>
           <p class="product-description">{{ product.description }}</p>
+          <p class="stock" v-if="product.stock > 0">In Stock: {{ product.stock }}</p>
           <div class="product-badges">
             <span v-if="product.organic" class="badge badge-organic">Organic</span>
             <span v-if="product.local" class="badge badge-local">Local</span>
@@ -72,7 +66,7 @@
     </div>
 
     <div v-if="hasMore && filteredProducts.length > 0" class="text-center mt-4">
-      <button @click="loadMoreProducts" class="btn">Load More</button>
+      <button class="btn">Load More</button>
     </div>
 
 
@@ -90,7 +84,7 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory, searchProducts, addToCart, filterProducts } from '../services/firestore';
+import { getProducts, getProductsByCategory, addToCart, filterProducts } from '../services/firestore';
 import { isAuthenticated, getUserId } from '../services/auth';
 import FilterPopup from '../components/FilterPopup.vue';
 
@@ -131,25 +125,7 @@ export default {
         this.loading = false
       }
     },
-
-    async handleSearch() {
-      if (!this.searchQuery.trim()) {
-        // If search query is empty, show all products or apply current filters
-        return
-      }
-      
-      this.loading = true
-      
-      try {
-        this.filteredProducts = await searchProducts(this.searchQuery)
-      } catch (error) {
-        this.error = 'Failed to search products. Please try again.'
-        console.error('Error searching products:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
+    
     async addToCart(product) {
       if (!this.isAuthenticated) {
         alert('Please log in to add items to your cart.')
@@ -218,21 +194,6 @@ export default {
   font-size: 1.2rem;
   margin-bottom: 2rem;
   opacity: 0.9;
-}
-
-.search-container {
-  display: flex;
-  max-width: 500px;
-  margin: 0 auto;
-  gap: 1rem;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
 }
 
 .filters {
@@ -395,6 +356,11 @@ export default {
 .add-product-card-content p {
   font-size: 15px; /* Slightly larger subtext font size */
  color: #555;
+}
+
+.stock {
+ font-size: 0.8rem;
+ font-size: 1rem;
 }
 </style>
 

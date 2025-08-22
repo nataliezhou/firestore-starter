@@ -112,6 +112,7 @@ const generateProducts = async (sellers) => {
     const organic = Math.random() > 0.2;
     const local = true;
     const fresh = Math.random() > 0.3;
+    const stock = Math.floor(Math.random() * 10) + 1; // Random number between 1 and 10
 
     let imageUrl = `https://source.unsplash.com/300x200/?${category}`;
     try {
@@ -139,6 +140,7 @@ const generateProducts = async (sellers) => {
       organic,
       local,
       fresh,
+      stock,
       sellerId: seller.id,
     });
     productId++;
