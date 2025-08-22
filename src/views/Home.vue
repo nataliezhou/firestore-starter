@@ -44,23 +44,22 @@
           <img :src="product.image" :alt="product.name">
         </div>
         <div class="product-info">
-          <h3>{{ product.name }}</h3>
+          <h3 class="product-name">{{ product.name }}</h3>
           <p class="product-description">{{ product.description }}</p>
-          <p class="stock" v-if="product.stock > 0">In Stock: {{ product.stock }}</p>
-          <div class="product-badges">
-            <span v-if="product.organic" class="badge badge-organic">Organic</span>
-            <span v-if="product.local" class="badge badge-local">Local</span>
-            <span v-if="product.fresh" class="badge badge-fresh">Fresh</span>
+          <div class="product-details">
+            <div>
+              <p class="stock" v-if="product.stock > 0">In Stock: {{ product.stock }}</p>
+              <router-link :to="`/seller/${product.sellerId}`" class="seller-link">
+                By {{ product.sellerName }}
+              </router-link>
+            </div>
+            <div v-if="isAuthenticated" class="quantity-controls">
+              <button class="btn btn-sm">-</button>
+              <span class="quantity">{{ 0 }}</span>
+              <button class="btn btn-sm">+</button>
+            </div>
           </div>
-          <div class="product-footer">
-            <span class="price">${{ product.price }}</span>
-            <button @click="addToCart(product)" class="btn" :disabled="!isAuthenticated">
-              {{ isAuthenticated ? 'Add to Cart' : 'Login to Add' }}
-            </button>
-          </div>
-          <router-link :to="`/seller/${product.sellerId}`" class="seller-link">
-            By {{ product.sellerName }}
-          </router-link>
+          
         </div>
       </div>
     </div>
@@ -101,6 +100,7 @@ export default {
       error: null,
       isAuthenticated: false,
       isFilterPopupVisible: false, // Added filter popup visibility
+      cart: [], // Initialize cart as an empty array
       lastDoc: null, // To store the last fetched document for pagination
       hasMore: true, // To indicate if there are more products to load
     };
@@ -282,8 +282,13 @@ export default {
   flex-direction: column;
 }
 
+.product-name {
+  margin-bottom: 0.5rem;
+}
+
 .product-info h3 {
   margin-bottom: 0.5rem;
+  line-height: 1.2; /* Adjust line height for smaller space */
   color: #333;
 }
 
@@ -291,6 +296,12 @@ export default {
   color: #666;
   margin-bottom: 1rem;
   flex: 1;
+}
+
+.product-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .product-badges {
@@ -301,14 +312,18 @@ export default {
 }
 
 .product-footer {
+  margin-top: auto; /* Push footer to the bottom */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+}
+
+.add-to-cart-btn {
+  width: 100%;
 }
 
 .seller-link {
-  color: #666;
+  color: #555;
   text-decoration: none;
   font-size: 0.9rem;
 }
@@ -361,10 +376,20 @@ export default {
   font-size: 15px; /* Slightly larger subtext font size */
  color: #555;
 }
-
 .stock {
- font-size: 0.8rem;
  font-size: 1rem;
+ margin-bottom: 0.2rem; /* Adjust spacing between stock and seller */
+}
+.quantity-controls {
+  display: flex;
+  align-items: center; /* Align buttons to the top */
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 1.5rem;
 }
 </style>
 
