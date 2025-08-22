@@ -190,7 +190,18 @@ export default {
             this.productListeners[product.id] = watchProduct(product.id, (updatedProductData) => {
               const index = this.filteredProducts.findIndex(p => p.id === updatedProductData.id);
               if (index !== -1) {
-                this.filteredProducts[index].stock = updatedProductData.stock;
+                // If stock is 0, remove the product
+                if (updatedProductData.stock === 0) {
+                  this.filteredProducts.splice(index, 1);
+                  // Also unsubscribe from this product's listener
+                  if (this.productListeners[updatedProductData.id]) {
+ this.productListeners[updatedProductData.id]();
+                    delete this.productListeners[updatedProductData.id];
+                  }
+                } else {
+                  // Otherwise, just update the stock
+                  this.filteredProducts[index].stock = updatedProductData.stock;
+                }
               }
             });
           }
