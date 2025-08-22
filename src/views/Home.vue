@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory, addToCart, filterProducts, updateProductStock } from '../services/firestore';
+import { getProducts, getProductsByCategory, addToCart, filterProducts, updateProductStock, watchProduct } from '../services/firestore';
 import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import FilterPopup from '../components/FilterPopup.vue';
 
@@ -103,6 +103,7 @@ export default {
       cart: [], // Initialize cart as an empty array
       lastDoc: null, // To store the last fetched document for pagination
       hasMore: true, // To indicate if there are more products to load
+ productListeners: {}, // To store unsubscribe functions for product listeners
     };
   },
   async mounted() {
@@ -113,6 +114,15 @@ export default {
     });
     // Load initial products or apply default filters if needed
     await this.applyFilters({}) // Load all products initially
+  },
+  beforeUnmount() {
+    // Unsubscribe from all product listeners
+    for (const productId in this.productListeners) {
+      if (this.productListeners[productId]) {
+        this.productListeners[productId](); // Call the unsubscribe function
+        delete this.productListeners[productId]; // Clean up the object
+      }
+    }
   },
   methods: { 
     async loadProducts() {
@@ -172,6 +182,19 @@ export default {
         } else {
           this.filteredProducts = productsWithQuantity;
         }
+
+        // Watch each product for stock changes
+        this.filteredProducts.forEach(product => {
+          // Avoid creating duplicate listeners
+          if (!this.productListeners[product.id]) {
+            this.productListeners[product.id] = watchProduct(product.id, (updatedProductData) => {
+              const index = this.filteredProducts.findIndex(p => p.id === updatedProductData.id);
+              if (index !== -1) {
+                this.filteredProducts[index].stock = updatedProductData.stock;
+              }
+            });
+          }
+        });
 
         // Debugging log to check product quantities
         console.log('Filtered products with quantities:', this.filteredProducts);

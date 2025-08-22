@@ -11,7 +11,8 @@ import {
   limit,
   orderBy,
   serverTimestamp,
-  startAfter
+  startAfter,
+  onSnapshot
 } from 'firebase/firestore';
 
 
@@ -79,6 +80,23 @@ export const updateProductStock = async (productId, newStock) => {
     console.log("updated product in firestore")
   } catch (error) {
     console.error('Error updating product stock:', error);
+    throw error;
+  }
+};
+
+export const watchProduct = (productId, callback) => {
+  try {
+    const productRef = doc(db, 'products', productId);
+    return onSnapshot(productRef, (docSnap) => {
+      console.log("watched")
+      if (docSnap.exists()) {
+        callback({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        callback(null); // Product was likely deleted
+      }
+    });
+  } catch (error) {
+    console.error('Error watching product:', error);
     throw error;
   }
 };
