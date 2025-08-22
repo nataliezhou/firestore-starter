@@ -6,6 +6,7 @@ import ProductDetail from './views/ProductDetail.vue'
 import Cart from './views/Cart.vue'
 import SellerProfile from './views/SellerProfile.vue'
 import Sell from './views/Sell.vue'
+import { authReady } from './services/auth'
 import './style.css'
 
 const routes = [
@@ -21,6 +22,8 @@ const router = createRouter({
   routes
 })
 
-const app = createApp(App)
-app.use(router)
-app.mount('#app')
+authReady.then(() => {
+  const app = createApp(App)
+  app.use(router)
+  app.mount('#app')
+});

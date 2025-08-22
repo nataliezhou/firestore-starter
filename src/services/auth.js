@@ -11,10 +11,16 @@ import { auth } from '../firebase'
 let currentUser = null
 const authStateListeners = []
 
+// Promise to indicate when Firebase auth is initialized
+let authReadyResolver = null
+export const authReady = new Promise(resolve => {
+  authReadyResolver = resolve })
+
 export const getCurrentUser = () => currentUser
 
 export const onAuthStateChange = (callback) => {
-  authStateListeners.push(callback)
+  authStateListeners.push(callback);
+  callback(currentUser); // Immediately call with current state
   return () => {
     const index = authStateListeners.indexOf(callback)
     if (index > -1) {
@@ -23,9 +29,15 @@ export const onAuthStateChange = (callback) => {
   }
 }
 
+
 // Initialize auth state listener
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, (user) => { // listening to firebase 
+  console.log("auth state listener called in auth.js")
   currentUser = user
+  if (authReadyResolver) {
+    authReadyResolver()
+    authReadyResolver = null
+  }
   authStateListeners.forEach(callback => callback(user))
 })
 
@@ -70,6 +82,7 @@ export const logoutUser = async () => {
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
+  console.log("check is auth")
   return !!currentUser
 }
 

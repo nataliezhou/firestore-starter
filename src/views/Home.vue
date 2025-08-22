@@ -85,7 +85,7 @@
 
 <script>
 import { getProducts, getProductsByCategory, addToCart, filterProducts } from '../services/firestore';
-import { isAuthenticated, getUserId } from '../services/auth';
+import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import FilterPopup from '../components/FilterPopup.vue';
 
 export default {
@@ -107,6 +107,10 @@ export default {
   },
   async mounted() {
     this.isAuthenticated = isAuthenticated()
+    onAuthStateChange((user) => {
+      // Update local isAuthenticated state when auth state changes
+      this.isAuthenticated = !!user;
+    });
     // Load initial products or apply default filters if needed
     await this.applyFilters({}) // Load all products initially
   },

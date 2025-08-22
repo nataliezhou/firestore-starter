@@ -80,7 +80,7 @@
 
 <script>
 import { getCart } from './services/firestore'
-import { loginUser, registerUser, logoutUser, onAuthStateChange, getCurrentUser } from './services/auth'
+import { loginUser, registerUser, logoutUser, onAuthStateChange, isAuthenticated } from './services/auth'
 
 export default {
   name: 'App',
@@ -104,8 +104,10 @@ export default {
   },
   async mounted() {
     // Listen for auth state changes
+    console.log("app mount")
     onAuthStateChange((user) => {
-      this.isAuthenticated = !!user
+      console.log("on auth state change app vue")
+      this.isAuthenticated = isAuthenticated()
       this.currentUser = user
       if (user) {
         this.loadCart()
