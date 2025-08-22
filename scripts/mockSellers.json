@@ -81,7 +81,7 @@
       "family": true
     }
   ],
-  "allProducts": [
+  "products": [
     {
       "id": 1,
       "name": "Fresh Organic Tomatoes",

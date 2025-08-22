@@ -2,7 +2,10 @@ import 'dotenv/config' // Load environment variables
 
 import { initializeApp } from 'firebase/app'; // Import initializeApp
 import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, terminate } from 'firebase/firestore'; // Import necessary Firestore functions, including serverTimestamp and terminate
-import mockData from './mockSellers.json' with { type: "json" };
+//TO BE CONFIGURED
+import mockData from './mockData.json' with { type: "json" };
+
+
 // Define firebaseConfig using process.env (Node.js environment)
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY,
@@ -13,7 +16,6 @@ const firebaseConfig = {
   appId: process.env.VITE_FIREBASE_APP_ID,
   measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID, // Ensure this matches your .env
 };
-
 
 // Initialize Firebase app and Firestore for this script
 const app = initializeApp(firebaseConfig);
@@ -27,7 +29,7 @@ const db = getFirestore(app);
  * 
  * Deletes all documents in a Firestore collection in batches.
  */
-async function deleteCollection(collectionPath) {
+async function deleteCollection(collectionPath) { 
   const batchSize = 500; // Adjust batch size as needed
   const collectionRef = collection(db, collectionPath);
   const q = query(collectionRef, orderBy('__name__'), limit(batchSize));
@@ -65,7 +67,6 @@ const addSellerToStore = async (seller) => {
 const addProductToStore = async (product) => {
     await addDoc(collection(db, 'products'), product);
 }   
-
 
 
 /**
@@ -130,7 +131,7 @@ const addMockProducts = async (dataFile) => {
 
     const products = [];
 
-    dataFile.allProducts.forEach(product => {
+    dataFile.products.forEach(product => {
 
       // get relevant product info
       const seller = sellersMap.get(product.sellerId);
@@ -154,17 +155,17 @@ const addMockProducts = async (dataFile) => {
     const promises = products.map(product => {
         return addProductToStore(product);
     });
-
-    return promises; // Returns the results of each addDoc call.
+     await Promise.all(promises); // Wait for all products to be added.
   } catch (error) {
-    console.error('Error adding mock sellers to Firestore:', error);
+    console.error('Error adding mock products to Firestore:', error);
     throw error;
   } 
 };
 
 
 const main = async () => {
-  await Promise.all([addMockSellers(mockData), addMockProducts(mockData)]);
+  await addMockSellers(mockData);
+  await addMockProducts(mockData);
   console.log(`Successfully added sellers and products to Firestore.`);
   await terminate(db);
 };

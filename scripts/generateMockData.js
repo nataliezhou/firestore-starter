@@ -16,10 +16,31 @@ const unsplash = createApi({
 });
 
 // --- Data Generation Configuration ---
-const categories = ["Vegetables", "Fruits", "Dairy", "Meat", "Bakery", "Herbs", "Pantry"];
+const categories = ["Vegetables", "Fruits", "Dairy", "Meat", "Bakery", "Herbs"];
 const sellerTypes = ["Farm", "Bakery", "Chef", "Garden"];
 const NUM_SELLERS = 25;
-const NUM_PRODUCTS = 1;
+const NUM_PRODUCTS = 30;
+
+const priceRanges = {
+ "Vegetables": { min: 1.5, max: 5.0 },
+ "Fruits": { min: 2.0, max: 6.5 },
+ "Dairy": { min: 3.0, max: 8.0 },
+ "Meat": { min: 5.0, max: 15.0 },
+ "Bakery": { min: 2.5, max: 7.0 },
+ "Herbs": { min: 1.0, max: 3.0 },
+ "Pantry": { min: 1.0, max: 10.0 }
+};
+
+const categorySellerMap = {
+  "Vegetables": ["Farm", "Garden"],
+  "Fruits": ["Farm", "Garden"],
+  "Dairy": ["Farm"],
+  "Meat": ["Farm"],
+  "Bakery": ["Bakery"],
+  "Herbs": ["Farm", "Garden"],
+  "Pantry": ["Chef", "Farm"],
+};
+
 
 // --- Data Generation Functions ---
 
@@ -74,11 +95,20 @@ const generateProducts = async (sellers) => {
   let productId = 1;
 
   for (let i = 0; i < NUM_PRODUCTS; i++) {
-    const seller = sellers[Math.floor(Math.random() * sellers.length)];
     const category = categories[Math.floor(Math.random() * categories.length)];
-    const name = `Organic ${category.slice(0, -1)} #${productId}`;
-    const description = `A delicious ${name} from ${seller.name}.`;
-    const price = parseFloat((Math.random() * 20 + 1).toFixed(2));
+    const allowedSellerTypes = categorySellerMap[category] || sellerTypes; // Use fallback if category not mapped
+
+    // Filter sellers by allowed types
+    const potentialSellers = sellers.filter(seller => {
+      const sellerType = seller.name.split(' ')[0]; // Extract seller type from name
+      return allowedSellerTypes.includes(sellerType);
+    });
+
+    const seller = potentialSellers.length > 0 ? potentialSellers[Math.floor(Math.random() * potentialSellers.length)] : sellers[Math.floor(Math.random() * sellers.length)]; // Fallback to any seller if no suitable seller is found
+    var name = `Organic ${category} #${productId}`;
+    var description = `A delicious ${name} from ${seller.name}.`;
+    const range = priceRanges[category] || { min: 1, max: 10 }; // Default range
+    const price = parseFloat((Math.random() * (range.max - range.min) + range.min).toFixed(2));
     const organic = Math.random() > 0.2;
     const local = true;
     const fresh = Math.random() > 0.3;
@@ -86,18 +116,17 @@ const generateProducts = async (sellers) => {
     let imageUrl = `https://source.unsplash.com/300x200/?${category}`;
     try {
       const unsplashResponse = await unsplash.photos.getRandom({
-        query: category,
+        query: `${category}, food, market, fresh, produce`,
         orientation: 'landscape',
       });
-      console.log("x", unsplashResponse)
       if (unsplashResponse.response) {
-        console.log(unsplashResponse.response)
         imageUrl = unsplashResponse.response.urls.small;
+        description = unsplashResponse.alt_description
       }
     } catch (error) {
       console.error(`Error fetching image for category ${category}:`, error.message);
       // Fallback to source.unsplash.com if API fails
-      imageUrl = `https://source.unsplash.com/300x200/?${category},food`;
+      imageUrl = `https://source.unsplash.com/300x200/?${category},food,market,fresh,produce`;
     }
 
     generatedProducts.push({
@@ -118,7 +147,7 @@ const generateProducts = async (sellers) => {
 };
 
 const main = async () => {
-  const mockDataPath = './mockData.json';
+  const mockDataPath = './scripts/mockData.json';
   console.log('Generating new mock data...');
 
   const generatedSellers = generateSellers();
