@@ -54,9 +54,9 @@
               </router-link>
             </div>
             <div v-if="isAuthenticated" class="quantity-controls">
-              <button class="btn btn-sm">-</button>
-              <span class="quantity">{{ 0 }}</span>
-              <button class="btn btn-sm">+</button>
+              <button class="btn btn-sm" @click.prevent.stop="decrementQuantity(product)">-</button>
+              <span class="quantity">{{ product.quantity }}</span>
+              <button class="btn btn-sm" @click.prevent.stop="incrementQuantity(product)">+</button>
             </div>
           </div>
           
@@ -114,7 +114,7 @@ export default {
     // Load initial products or apply default filters if needed
     await this.applyFilters({}) // Load all products initially
   },
-  methods: {
+  methods: { 
     async loadProducts() {
       try {
         if (category === 'All') {
@@ -160,11 +160,26 @@ export default {
       
       try {
         const newProducts = await filterProducts(filters, loadMore ? this.lastDoc : null);
+
+        // Add quantity property to each product and initialize to 0
+        const productsWithQuantity = newProducts.map(product => ({
+          ...product,
+          quantity: 0
+        }));
+
         if (loadMore) {
-          this.filteredProducts = [...this.filteredProducts, ...newProducts];
+          this.filteredProducts = [...this.filteredProducts, ...productsWithQuantity];
         } else {
-          this.filteredProducts = newProducts;
+          this.filteredProducts = productsWithQuantity;
         }
+
+        // Debugging log to check product quantities
+        console.log('Filtered products with quantities:', this.filteredProducts);
+
+
+
+
+
         this.hasMore = newProducts.length === 20; // Assuming page size is 20
         if (newProducts.length > 0) {
           this.lastDoc = newProducts[newProducts.length - 1];
@@ -174,7 +189,21 @@ export default {
       }
       this.loading = false;
       this.closeFilterPopup();
+    },
+    incrementQuantity(product) {
+      console.log('Incrementing quantity for:', product.name); // Debugging log
+      if (product.quantity < product.stock) {
+        product.quantity++;
+      }
+    },
+    decrementQuantity(product) {
+      console.log('Decrementing quantity for:', product.name); // Debugging log
+      if (product.quantity > 0) {
+        product.quantity--;
+      }
     }
+
+
   }
 }
 </script>
@@ -377,7 +406,7 @@ export default {
  color: #555;
 }
 .stock {
- font-size: 1rem;
+ font-size: 0.9rem;
  margin-bottom: 0.2rem; /* Adjust spacing between stock and seller */
 }
 .quantity-controls {
