@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory, addToCart, filterProducts } from '../services/firestore';
+import { getProducts, getProductsByCategory, addToCart, filterProducts, updateProductStock } from '../services/firestore';
 import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import FilterPopup from '../components/FilterPopup.vue';
 
@@ -176,10 +176,6 @@ export default {
         // Debugging log to check product quantities
         console.log('Filtered products with quantities:', this.filteredProducts);
 
-
-
-
-
         this.hasMore = newProducts.length === 20; // Assuming page size is 20
         if (newProducts.length > 0) {
           this.lastDoc = newProducts[newProducts.length - 1];
@@ -192,17 +188,28 @@ export default {
     },
     incrementQuantity(product) {
       console.log('Incrementing quantity for:', product.name); // Debugging log
-      if (product.quantity < product.stock) {
+      if (product.stock > 0) {
         product.quantity++;
+        product.stock--; // Decrement local stock
+        try {
+          updateProductStock(product.id, product.stock);
+        } catch (error) {
+          console.error('Error updating product stock:', error);
+        }
       }
     },
     decrementQuantity(product) {
       console.log('Decrementing quantity for:', product.name); // Debugging log
       if (product.quantity > 0) {
         product.quantity--;
+        product.stock++; // Increment local stock
+        try {
+          updateProductStock(product.id, product.stock);
+        } catch (error) {
+          console.error('Error updating product stock:', error);
+        }
       }
     }
-
 
   }
 }

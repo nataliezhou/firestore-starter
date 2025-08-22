@@ -72,6 +72,17 @@ export const getProductsByCategory = async (category) => {
   }
 }
 
+export const updateProductStock = async (productId, newStock) => {
+  try {
+    const productRef = doc(db, 'products', productId);
+    await updateDoc(productRef, { stock: newStock });
+    console.log("updated product in firestore")
+  } catch (error) {
+    console.error('Error updating product stock:', error);
+    throw error;
+  }
+};
+
 export const searchProducts = (products, searchTerm) => {
   return products.filter(product => 
  product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,6 +171,7 @@ export const getCart = async (userId) => {
   }
 }
 
+// deprecated
 export const addToCart = async (userId, product) => {
   try {
     // Check product stock
