@@ -205,6 +205,28 @@ export const getCart = async (userId) => {
   }
 }
 
+export const watchCart = (userId, callback) => {
+  try {
+    const q = query(cartsCollection, where('userId', '==', userId));
+    return onSnapshot(q, (querySnapshot) => {
+      if (!querySnapshot.empty) {
+        const cartDocRef = querySnapshot.docs[0].ref;
+        const itemsCollection = collection(cartDocRef, 'items');
+        // Now listen to the items subcollection
+        return onSnapshot(itemsCollection, (itemsSnapshot) => {
+          const cartItems = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          callback(cartItems);
+        });
+      } else {
+        // Cart doesn't exist yet or was deleted
+        callback([]);
+      }
+    });
+  } catch (error) {
+    console.error('Error watching cart:', error);
+    throw error;
+  }
+}
 // deprecated
 // export const addToCart = async (userId, product) => {
 //   try {

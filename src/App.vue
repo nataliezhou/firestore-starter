@@ -79,8 +79,8 @@
 </template>
 
 <script>
-import { getCart } from './services/firestore'
-import { loginUser, registerUser, logoutUser, onAuthStateChange, isAuthenticated } from './services/auth'
+import { watchCart } from './services/firestore'
+import { loginUser, registerUser, logoutUser, onAuthStateChange, isAuthenticated, getUserId } from './services/auth'
 
 export default {
   name: 'App',
@@ -102,32 +102,32 @@ export default {
       }
     }
   },
-  async mounted() {
+  mounted() {
     // Listen for auth state changes
     console.log("app mount")
     onAuthStateChange((user) => {
       console.log("on auth state change app vue")
       this.isAuthenticated = isAuthenticated()
       this.currentUser = user
+      // When user logs in, start watching their cart
       if (user) {
-        this.loadCart()
+        this.watchUserCart()
       } else {
+        // When user logs out, unsubscribe from cart updates and reset count
+        if (this.unsubscribeCart) {
+          this.unsubscribeCart()
+        }
         this.cartItemCount = 0
       }
     })
   },
+  beforeUnmount() {
+    // Unsubscribe from cart updates when the component is unmounted
+    if (this.unsubscribeCart) {
+      this.unsubscribeCart()
+    }
+  },
   methods: {
-    async loadCart() {
-      try {
-        const userId = this.currentUser?.uid
-        if (userId) {
-          const cartItems = await getCart(userId)
-          this.cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
-        }
-      } catch (error) {
-        console.error('Error loading cart:', error)
-      }
-    },
     
     async login() {
       try {
@@ -154,6 +154,17 @@ export default {
         await logoutUser()
       } catch (error) {
         console.error('Logout error:', error)
+      }
+    },
+
+    watchUserCart() {
+      const userId = getUserId();
+      if (userId) {
+        // Subscribe to cart changes and store the unsubscribe function
+        this.unsubscribeCart = watchCart(userId, (cartItems) => {
+          // Update cart item count based on the received cart items
+          this.cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+        });
       }
     }
   }

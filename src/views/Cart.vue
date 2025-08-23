@@ -39,9 +39,9 @@
           <div class="item-quantity">
             <label>Quantity:</label>
             <div class="quantity-controls">
-              <button @click="decreaseQuantity(item)" class="quantity-btn">-</button>
+          <!--     <button @click="decreaseQuantity(item)" class="quantity-btn">-</button> -->
               <span class="quantity-display">{{ item.quantity }}</span>
-              <button @click="increaseQuantity(item)" class="quantity-btn">+</button>
+          <!--     <button @click="increaseQuantity(item)" class="quantity-btn">+</button> -->
             </div>
           </div>
           
@@ -49,7 +49,7 @@
             <span class="total-price">${{ (item.price * item.quantity).toFixed(2) }}</span>
           </div>
           
-          <button @click="removeItem(item)" class="remove-btn">Remove</button>
+      <!--    <button @click="removeItem(item)" class="remove-btn">Remove</button> -->
         </div>
       </div>
       

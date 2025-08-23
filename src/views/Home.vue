@@ -45,6 +45,7 @@
         </div>
         <div class="product-info">
           <h3 class="product-name">{{ product.name }}</h3>
+ <p class="product-price">${{ product.price.toFixed(2) }}</p>
           <p class="product-description">{{ product.description }}</p>
           <div class="product-details">
             <div>
@@ -344,6 +345,11 @@ export default {
   margin-bottom: 0.5rem;
   line-height: 1.2; /* Adjust line height for smaller space */
   color: #333;
+}
+
+.product-price {
+  font-weight: bold;
+  color: #4CAF50;
 }
 
 .product-description {
