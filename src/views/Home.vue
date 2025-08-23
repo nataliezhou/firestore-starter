@@ -83,7 +83,8 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory, addToCart, filterProducts, updateProductStock, watchProduct } from '../services/firestore';
+import { getProducts, getProductsByCategory , filterProducts, watchProduct } from '../services/firestore';
+import { incrementQuantity, decrementQuantity } from '../services/cart';
 import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import FilterPopup from '../components/FilterPopup.vue';
 
@@ -220,29 +221,12 @@ export default {
       this.loading = false;
       this.closeFilterPopup();
     },
-    incrementQuantity(product) {
-      console.log('Incrementing quantity for:', product.name); // Debugging log
-      if (product.stock > 0) {
-        product.quantity++;
-        product.stock--; // Decrement local stock
-        try {
-          updateProductStock(product.id, product.stock);
-        } catch (error) {
-          console.error('Error updating product stock:', error);
-        }
-      }
+    // Use the imported functions
+    async incrementQuantity(product) {
+      await incrementQuantity(product);
     },
-    decrementQuantity(product) {
-      console.log('Decrementing quantity for:', product.name); // Debugging log
-      if (product.quantity > 0) {
-        product.quantity--;
-        product.stock++; // Increment local stock
-        try {
-          updateProductStock(product.id, product.stock);
-        } catch (error) {
-          console.error('Error updating product stock:', error);
-        }
-      }
+    async decrementQuantity(product) {
+      await decrementQuantity(product);
     }
 
   }

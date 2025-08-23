@@ -6,6 +6,7 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc, 
+  setDoc,
   query, 
   where,
   limit,
@@ -73,11 +74,24 @@ export const getProductsByCategory = async (category) => {
   }
 }
 
-export const updateProductStock = async (productId, newStock) => {
+export const createCart = async (userId) => {
   try {
-    const productRef = doc(db, 'products', productId);
-    await updateDoc(productRef, { stock: newStock });
-    console.log("updated product in firestore")
+    await addDoc(cartsCollection, {
+      userId,
+      createdAt: serverTimestamp(),
+    });
+    console.log("Cart created for user:", userId);
+  } catch (error) {
+    console.error('Error creating cart:', error);
+    throw error;
+  }
+};
+
+export const updateProductStock = async (product) => {
+  try {
+    const productRef = doc(db, 'products', product.id);
+    await updateDoc(productRef, { stock: product.stock });
+    console.log("updated product in firestore with stock: ", product.stock)
   } catch (error) {
     console.error('Error updating product stock:', error);
     throw error;
@@ -127,7 +141,6 @@ export const filterProducts = async (filters) => {
     }
 
     const querySnapshot = await getDocs(productQuery);
-    console.log("products have filtered")
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -180,116 +193,128 @@ export const getCart = async (userId) => {
     const querySnapshot = await getDocs(q)
     
     if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data().items || []
+      const cartDocRef = doc(db, 'carts', querySnapshot.docs[0].id);
+      const itemsCollection = collection(cartDocRef, 'items');
+      const itemsSnapshot = await getDocs(itemsCollection);
+      return itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
     return []
   } catch (error) {
     console.error('Error getting cart:', error)
-    throw error
+    throw error;
   }
 }
 
 // deprecated
-export const addToCart = async (userId, product) => {
+// export const addToCart = async (userId, product) => {
+//   try {
+//     // Check product stock
+//     const productRef = doc(db, 'products', product.id);
+//     const productSnap = await getDoc(productRef);
+
+//     if (!productSnap.exists()) {
+//       throw new Error('Product not found.');
+//     }
+
+//     const productData = productSnap.data();
+//     let currentStock = productData.stock || 0;
+
+//     if (currentStock <= 0) {
+//       throw new Error('Product is out of stock.');
+//     }
+
+//     // Add to user's cart
+//     const q = query(cartsCollection, where('userId', '==', userId))
+//     const querySnapshot = await getDocs(q)
+    
+//     if (querySnapshot.empty) {
+//       // Create new cart
+//       await addDoc(cartsCollection, {
+//         userId,
+//         items: [{
+//           id: product.id,
+//           name: product.name,
+//           price: product.price,
+//           image: product.image,
+//           quantity: 1
+//         }],
+//         createdAt: serverTimestamp()
+//       })
+//     } else {
+//       // Update existing cart
+//       const cartDoc = querySnapshot.docs[0]
+//       const cartData = cartDoc.data()
+//       const existingItem = cartData.items.find(item => item.id === product.id)
+      
+//       if (existingItem) {
+//         existingItem.quantity += 1
+//       } else {
+//         cartData.items.push({
+//           id: product.id,
+//           name: product.name,
+//           price: product.price,
+//           image: product.image,
+//           quantity: 1
+//         })
+//       }
+      
+//       await updateDoc(doc(db, 'carts', cartDoc.id), {
+//         items: cartData.items,
+//         updatedAt: serverTimestamp()
+//       })
+//     }
+
+//     // Decrement product stock
+//     const newStock = currentStock - 1;
+//     if (newStock === 0) {
+//       await deleteDoc(productRef);
+//     } else {
+//       await updateDoc(productRef, { stock: newStock });
+//     }
+
+//   } catch (error) {
+//     console.error('Error adding to cart:', error)
+//     throw error
+//   }
+// }
+
+export const updateCartItemQuantity = async (userId, product) => {
+  console.log("update cart item for user", userId, "product", product)
   try {
-    // Check product stock
-    const productRef = doc(db, 'products', product.id);
-    const productSnap = await getDoc(productRef);
-
-    if (!productSnap.exists()) {
-      throw new Error('Product not found.');
-    }
-
-    const productData = productSnap.data();
-    let currentStock = productData.stock || 0;
-
-    if (currentStock <= 0) {
-      throw new Error('Product is out of stock.');
-    }
-
-    // Add to user's cart
     const q = query(cartsCollection, where('userId', '==', userId))
     const querySnapshot = await getDocs(q)
     
+    let cartDocRef;
+
     if (querySnapshot.empty) {
-      // Create new cart
-      await addDoc(cartsCollection, {
-        userId,
-        items: [{
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity: 1
-        }],
-        createdAt: serverTimestamp()
-      })
+      // Create a new cart document
+      cartDocRef = doc(collection(db, 'carts'), userId);
+      await setDoc(cartDocRef, { userId });
     } else {
-      // Update existing cart
-      const cartDoc = querySnapshot.docs[0]
-      const cartData = cartDoc.data()
-      const existingItem = cartData.items.find(item => item.id === product.id)
-      
-      if (existingItem) {
-        existingItem.quantity += 1
-      } else {
-        cartData.items.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity: 1
-        })
-      }
-      
-      await updateDoc(doc(db, 'carts', cartDoc.id), {
-        items: cartData.items,
-        updatedAt: serverTimestamp()
-      })
+      // Get the existing cart document
+      cartDocRef = querySnapshot.docs[0].ref;
     }
-
-    // Decrement product stock
-    const newStock = currentStock - 1;
-    if (newStock === 0) {
-      await deleteDoc(productRef);
-    } else {
-      await updateDoc(productRef, { stock: newStock });
-    }
-
-  } catch (error) {
-    console.error('Error adding to cart:', error)
-    throw error
-  }
-}
-
-export const updateCartItemQuantity = async (userId, productId, quantity) => {
-  try {
-    const q = query(cartsCollection, where('userId', '==', userId))
-    const querySnapshot = await getDocs(q)
     
-    if (!querySnapshot.empty) {
-      const cartDoc = querySnapshot.docs[0]
-      const cartData = cartDoc.data()
-      const itemIndex = cartData.items.findIndex(item => item.id === productId)
-      
-      if (itemIndex !== -1) {
-        if (quantity <= 0) {
-          cartData.items.splice(itemIndex, 1)
-        } else {
-          cartData.items[itemIndex].quantity = quantity
-        }
-        
-        await updateDoc(doc(db, 'carts', cartDoc.id), {
-          items: cartData.items,
-          updatedAt: serverTimestamp()
-        })
-      }
+    // Reference to the specific item in the subcollection
+    const itemRef = doc(collection(cartDocRef, 'items'), product.id);
+
+    if (product.quantity <= 0) {
+      await deleteDoc(itemRef);
+    } else {
+
+      await setDoc(itemRef, { 
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity: product.quantity
+        });
     }
   } catch (error) {
-    console.error('Error updating cart item:', error)
-    throw error
+    console.error('Error updating cart item:', error);
+    throw error;
   }
-}
+};
 
 export const clearCart = async (userId) => {
   try {
@@ -297,7 +322,12 @@ export const clearCart = async (userId) => {
     const querySnapshot = await getDocs(q)
     
     if (!querySnapshot.empty) {
-      await deleteDoc(doc(db, 'carts', querySnapshot.docs[0].id))
+      const cartDocRef = querySnapshot.docs[0].ref;
+      const itemsCollection = collection(cartDocRef, 'items');
+      const itemsSnapshot = await getDocs(itemsCollection);
+      itemsSnapshot.docs.forEach(async (itemDoc) => {
+        await deleteDoc(itemDoc.ref);
+      });
     }
   } catch (error) {
     console.error('Error clearing cart:', error)

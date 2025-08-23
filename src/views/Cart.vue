@@ -90,8 +90,9 @@
 </template>
 
 <script>
-import { getCart, updateCartItemQuantity, clearCart } from '../services/firestore'
+import { getCart, clearCart, updateCartItemQuantity } from '../services/firestore'
 import { getUserId, isAuthenticated } from '../services/auth'
+import { incrementQuantity, decrementQuantity } from '../services/cart'
 
 export default {
   name: 'Cart',
@@ -136,34 +137,20 @@ export default {
       }
     },
     
-    async increaseQuantity(item) {
-      try {
-        const userId = getUserId()
-        await updateCartItemQuantity(userId, item.id, item.quantity + 1)
-        item.quantity++
-      } catch (error) {
-        alert('Failed to update quantity. Please try again.')
-        console.error('Error updating quantity:', error)
-      }
+    increaseQuantity(item) {
+      incrementQuantity(item);
     },
     
-    async decreaseQuantity(item) {
+    decreaseQuantity(item) {
       if (item.quantity > 1) {
-        try {
-          const userId = getUserId()
-          await updateCartItemQuantity(userId, item.id, item.quantity - 1)
-          item.quantity--
-        } catch (error) {
-          alert('Failed to update quantity. Please try again.')
-          console.error('Error updating quantity:', error)
-        }
+        decrementQuantity(item);
       }
     },
     
     async removeItem(item) {
       try {
         const userId = getUserId()
-        await updateCartItemQuantity(userId, item.id, 0) // Remove item
+        await updateCartItemQuantity(userId, item) // Remove item
         const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
         if (index > -1) {
           this.cartItems.splice(index, 1)

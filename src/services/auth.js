@@ -5,8 +5,9 @@ import {
   onAuthStateChanged,
   updateProfile,
   setPersistence,
-  browserSessionPersistence
-} from 'firebase/auth'
+  browserSessionPersistence,
+} from 'firebase/auth';
+import { createCart } from './firestore';
 import { auth } from '../firebase'
 
 // User state management
@@ -53,6 +54,8 @@ export const registerUser = async (email, password, displayName) => {
     await updateProfile(user, {
       displayName: displayName
     })
+
+  await createCart(user.uid);
     
     return user
   } catch (error) {
