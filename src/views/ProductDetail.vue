@@ -7,6 +7,10 @@
       
       <div class="product-info-section">
         <h1>{{ product.name }}</h1>
+        <div v-if="product.avgRating" class="product-rating">
+          <i class="fas fa-star"></i>
+          <span>{{ product.avgRating.toFixed(1) }}</span>
+        </div>
         <p class="product-description">{{ product.description }}</p>
         
         <div class="product-badges">
@@ -104,7 +108,8 @@ export default {
           sellerId: 1,
           sellerName: 'Green Valley Farm',
           sellerDescription: 'Green Valley Farm has been growing organic produce for over 20 years. We believe in sustainable farming practices and providing the community with the freshest, most nutritious food possible.',
-          location: 'Green Valley, 15 miles away'
+          location: 'Green Valley, 15 miles away',
+          avgRating: 4.8
         },
         {
           id: 2,
@@ -121,7 +126,8 @@ export default {
           sellerId: 2,
           sellerName: 'Rustic Bakery',
           sellerDescription: 'Rustic Bakery specializes in traditional bread-making techniques. We use only the finest ingredients and time-honored methods to create breads that are both delicious and nutritious.',
-          location: 'Downtown, 5 miles away'
+          location: 'Downtown, 5 miles away',
+          avgRating: 4.9
         },
         {
           id: 3,
@@ -138,7 +144,8 @@ export default {
           sellerId: 3,
           sellerName: 'Happy Hen Farm',
           sellerDescription: 'Happy Hen Farm raises chickens in a humane, sustainable way. Our birds have plenty of space to roam and access to fresh air and sunshine year-round.',
-          location: 'Happy Valley, 8 miles away'
+          location: 'Happy Valley, 8 miles away',
+          avgRating: 4.7
         },
         {
           id: 4,
@@ -155,7 +162,8 @@ export default {
           sellerId: 4,
           sellerName: 'Herb Garden Co',
           sellerDescription: 'Herb Garden Co grows a wide variety of culinary herbs using organic methods. We focus on flavor and freshness, ensuring you get the best herbs for your kitchen.',
-          location: 'Herb Garden, 12 miles away'
+          location: 'Herb Garden, 12 miles away',
+          avgRating: 4.6
         },
         {
           id: 5,
@@ -172,7 +180,8 @@ export default {
           sellerId: 5,
           sellerName: 'Prairie Ranch',
           sellerDescription: 'Prairie Ranch raises cattle using traditional ranching methods. Our animals graze on natural grasslands and are never given growth hormones or unnecessary antibiotics.',
-          location: 'Prairie Ranch, 25 miles away'
+          location: 'Prairie Ranch, 25 miles away',
+          avgRating: 4.9
         },
         {
           id: 6,
@@ -189,7 +198,8 @@ export default {
           sellerId: 1,
           sellerName: 'Green Valley Farm',
           sellerDescription: 'Green Valley Farm has been growing organic produce for over 20 years. We believe in sustainable farming practices and providing the community with the freshest, most nutritious food possible.',
-          location: 'Green Valley, 15 miles away'
+          location: 'Green Valley, 15 miles away',
+          avgRating: 4.8
         }
       ]
     }
@@ -259,6 +269,15 @@ export default {
   font-size: 2rem;
   margin-bottom: 1rem;
   color: #333;
+}
+
+.product-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #f59e0b; /* Gold color for stars */
 }
 
 .product-description {

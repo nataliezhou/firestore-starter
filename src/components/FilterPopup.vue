@@ -12,7 +12,7 @@
 
         <div class="form-group">
           <label>Price Range</label>
- <vue-slider v-model="priceRange" :max="maxPriceValue" :enable-cross="false"></vue-slider>
+          <vue-slider v-model="priceRange" :max="maxPriceValue" :enable-cross="false"></vue-slider>
           <div class="price-range-values">
             <span>Min: ${{ priceRange[0] }}</span>
             <span>Max: ${{ priceRange[1] }}</span>
@@ -20,8 +20,11 @@
         </div>
 
         <div class="form-group">
-          <label for="minRating">Minimum Rating</label>
-          <input id="minRating" type="number" min="0" max="5" step="0.1" v-model.number="filters.minRating" />
+          <label>Minimum Rating</label>
+          <vue-slider v-model="filters.minRating" :max="5" :interval="0.1"></vue-slider>
+          <div class="rating-value">
+            <span>Min: {{ filters.minRating }}</span>
+          </div>
         </div>
 
         <div class="actions">
@@ -38,26 +41,25 @@ import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/antd.css';
 
 export default {
-  name: 'FilterPopup', // Correctly define component name
+  name: 'FilterPopup',
   props: {
     isVisible: {
       type: Boolean,
       required: true,
     },
   },
- components: {
-    VueSlider, // Correctly register component
- },
+  components: {
+    VueSlider,
+  },
   emits: ['apply-filters', 'close'],
   data() {
     return {
-      // Corrected data structure
       filters: {
         category: 'All',
         minRating: 0,
       },
-      priceRange: [0, 500],
-      maxPriceValue: 500, // Max value for the slider
+      priceRange: [0, 25],
+      maxPriceValue: 25,
       categories: ['All', 'Vegetables', 'Fruits', 'Bakery', 'Dairy', 'Meat', 'Herbs'],
     };
   },
@@ -70,7 +72,7 @@ export default {
         }
       }
       activeFilters.minPrice = this.priceRange[0];
- activeFilters.maxPrice = this.priceRange[1];
+      activeFilters.maxPrice = this.priceRange[1];
       this.$emit('apply-filters', activeFilters);
       this.closePopup();
     },
@@ -126,7 +128,7 @@ select {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box; /* Ensures padding doesn't affect width */
+  box-sizing: border-box; 
 }
 
 .price-range {
@@ -139,7 +141,7 @@ select {
   font-weight: bold;
 }
 
-.price-range-values {
+.price-range-values, .rating-value {
   display: flex;
   justify-content: space-between;
   margin-top: 0.5rem;

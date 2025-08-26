@@ -98,11 +98,16 @@ export const updateProductStock = async (product) => {
   }
 };
 
+/**
+ * Add listener to each product doc
+ * @param {*} productId 
+ * @param {*} callback 
+ * @returns an unsubscriber function
+ */
 export const watchProduct = (productId, callback) => {
   try {
-    const productRef = doc(db, 'products', productId);
-    return onSnapshot(productRef, (docSnap) => {
-      console.log("watched")
+    const productRef = doc(db, 'products', productId); // Reference to the product document
+    return onSnapshot(productRef, (docSnap) => { 
       if (docSnap.exists()) {
         callback({ id: docSnap.id, ...docSnap.data() });
       } else {
@@ -124,9 +129,13 @@ export const searchProducts = (products, searchTerm) => {
 
 }
 
+/**
+ * Filters products based on the provided filters.
+ * @param {Object} filters - Object containing filter criteria.
+ */
 export const filterProducts = async (filters) => {
   try {   
-    let productQuery = query(productsCollection);
+    let productQuery = query(productsCollection); // Start with the base query
     if (filters.minPrice !== undefined && filters.minPrice !== null) {     
       productQuery = query(productQuery, where('price', '>=', filters.minPrice));
     }
@@ -140,7 +149,7 @@ export const filterProducts = async (filters) => {
       productQuery = query(productQuery, where('category', '==', filters.category));
     }
 
-    const querySnapshot = await getDocs(productQuery);
+    const querySnapshot = await getDocs(productQuery); // 
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -152,39 +161,39 @@ export const filterProducts = async (filters) => {
 };
 
 // Seller Operations
-export const getSellerById = async (sellerId) => {
-  try {
-    const docRef = doc(db, 'sellers', sellerId)
-    const docSnap = await getDoc(docRef)
+// export const getSellerById = async (sellerId) => {
+//   try {
+//     const docRef = doc(db, 'sellers', sellerId)
+//     const docSnap = await getDoc(docRef)
     
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() }
-    } else {
-      throw new Error('Seller not found')
-    }
-  } catch (error) {
-    console.error('Error getting seller:', error)
-    throw error
-  }
-}
+//     if (docSnap.exists()) {
+//       return { id: docSnap.id, ...docSnap.data() }
+//     } else {
+//       throw new Error('Seller not found')
+//     }
+//   } catch (error) {
+//     console.error('Error getting seller:', error)
+//     throw error
+//   }
+// }
 
-export const getSellerProducts = async (sellerId) => {
-  try {
-    const q = query(
-      productsCollection, 
-      where('sellerId', '==', sellerId),
-      orderBy('createdAt', 'desc')
-    )
-    const querySnapshot = await getDocs(q)
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  } catch (error) {
-    console.error('Error getting seller products:', error)
-    throw error
-  }
-}
+// export const getSellerProducts = async (sellerId) => {
+//   try {
+//     const q = query(
+//       productsCollection, 
+//       where('sellerId', '==', sellerId),
+//       orderBy('createdAt', 'desc')
+//     )
+//     const querySnapshot = await getDocs(q)
+//     return querySnapshot.docs.map(doc => ({
+//       id: doc.id,
+//       ...doc.data()
+//     }))
+//   } catch (error) {
+//     console.error('Error getting seller products:', error)
+//     throw error
+//   }
+// }
 
 // Cart Operations
 export const getCart = async (userId) => {
@@ -227,6 +236,7 @@ export const watchCart = (userId, callback) => {
     throw error;
   }
 }
+
 // deprecated
 // export const addToCart = async (userId, product) => {
 //   try {
