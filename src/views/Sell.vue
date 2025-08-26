@@ -15,6 +15,10 @@
         <input type="number" id="price" v-model.number="price" required min="0" step="0.01" />
       </div>
       <div class="form-group">
+        <label for="stock">Stock</label>
+        <input type="number" id="stock" v-model.number="stock" required min="0" />
+      </div>
+      <div class="form-group">
         <label for="image">Product Image</label>
         <input type="file" id="image" ref="imageInput" accept="image/*" @change="handleFileUpload" required />
       </div>
@@ -42,6 +46,7 @@ export default {
       name: '',
       description: '',
       price: 0,
+      stock: 0,
       category: '',
       categories: ['Vegetables', 'Fruits', 'Bakery', 'Dairy', 'Meat', 'Herbs'],
       selectedFile: null,
@@ -78,6 +83,7 @@ export default {
         category: this.category,
         description: this.description,
         price: parseFloat(this.price),
+        stock: parseInt(this.stock),
         image: imageUrl,
         numRatings: 0,
         avgRating: 0,

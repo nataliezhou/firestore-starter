@@ -98,7 +98,7 @@
 </template>
 
 <script>
-import { getProducts, getProductsByCategory , filterProducts, watchProduct } from '../services/firestore';
+import { filterProducts, watchProduct } from '../services/firestore';
 import { incrementQuantity, decrementQuantity } from '../services/cart';
 import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import VueSlider from 'vue-slider-component';
@@ -183,7 +183,7 @@ export default {
 
         this.filteredProducts.forEach(product => {
           if (!this.productListeners[product.id]) {
-            this.productListeners[product.id] = watchProduct(product.id, (updatedProductData) => {
+            this.productListeners[product.id] = watchProduct(product.id, (updatedProductData) => { 
               const index = this.filteredProducts.findIndex(p => p.id === updatedProductData.id);
               if (index !== -1) {
                 if (updatedProductData.stock === 0) {
@@ -199,8 +199,6 @@ export default {
             });
           }
         });
-
-        console.log('Filtered products with quantities:', this.filteredProducts);
 
         this.hasMore = newProducts.length === 20; // Assuming page size is 20
         if (newProducts.length > 0) {

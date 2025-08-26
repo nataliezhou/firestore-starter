@@ -88,7 +88,6 @@ export const logoutUser = async () => {
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
-  console.log("check is auth")
   return !!currentUser
 }
 
