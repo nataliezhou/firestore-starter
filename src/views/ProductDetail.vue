@@ -86,158 +86,50 @@
 </template>
 
 <script>
+import { watchProduct, updateCartItemQuantity } from '../services/firestore';
+import { getUserId, isAuthenticated } from '../services/auth';
+
 export default {
   name: 'ProductDetail',
   data() {
     return {
       quantity: 1,
       product: null,
-      products: [
-        {
-          id: 1,
-          name: 'Fresh Organic Tomatoes',
-          description: 'Sweet, juicy tomatoes grown without pesticides',
-          longDescription: 'These tomatoes are grown using traditional farming methods without the use of synthetic pesticides or fertilizers. They are picked at peak ripeness to ensure maximum flavor and nutritional value.',
-          price: 3.99,
-          unit: 'lb',
-          image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=600&h=400&fit=crop',
-          category: 'Vegetables',
-          organic: true,
-          local: true,
-          fresh: true,
-          sellerId: 1,
-          sellerName: 'Green Valley Farm',
-          sellerDescription: 'Green Valley Farm has been growing organic produce for over 20 years. We believe in sustainable farming practices and providing the community with the freshest, most nutritious food possible.',
-          location: 'Green Valley, 15 miles away',
-          avgRating: 4.8
-        },
-        {
-          id: 2,
-          name: 'Artisan Sourdough Bread',
-          description: 'Traditional sourdough made with local flour',
-          longDescription: 'Our sourdough bread is made using a 100-year-old starter culture and locally sourced flour. Each loaf is hand-shaped and baked in a stone oven for that perfect crust and texture.',
-          price: 5.50,
-          unit: 'loaf',
-          image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=400&fit=crop',
-          category: 'Bakery',
-          organic: false,
-          local: true,
-          fresh: true,
-          sellerId: 2,
-          sellerName: 'Rustic Bakery',
-          sellerDescription: 'Rustic Bakery specializes in traditional bread-making techniques. We use only the finest ingredients and time-honored methods to create breads that are both delicious and nutritious.',
-          location: 'Downtown, 5 miles away',
-          avgRating: 4.9
-        },
-        {
-          id: 3,
-          name: 'Fresh Eggs',
-          description: 'Farm fresh eggs from free-range chickens',
-          longDescription: 'Our eggs come from chickens that roam freely on our farm, eating a natural diet of grass, insects, and organic feed. This results in eggs with rich, golden yolks and superior taste.',
-          price: 4.99,
-          unit: 'dozen',
-          image: 'https://images.unsplash.com/photo-1569288063648-5d2194db4b13?w=600&h=400&fit=crop',
-          category: 'Dairy',
-          organic: true,
-          local: true,
-          fresh: true,
-          sellerId: 3,
-          sellerName: 'Happy Hen Farm',
-          sellerDescription: 'Happy Hen Farm raises chickens in a humane, sustainable way. Our birds have plenty of space to roam and access to fresh air and sunshine year-round.',
-          location: 'Happy Valley, 8 miles away',
-          avgRating: 4.7
-        },
-        {
-          id: 4,
-          name: 'Mixed Herbs Bundle',
-          description: 'Fresh basil, rosemary, and thyme',
-          longDescription: 'This bundle includes fresh basil, rosemary, and thyme, all grown in our greenhouse without pesticides. Perfect for cooking and garnishing your favorite dishes.',
-          price: 2.99,
-          unit: 'bundle',
-          image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop',
-          category: 'Herbs',
-          organic: true,
-          local: true,
-          fresh: true,
-          sellerId: 4,
-          sellerName: 'Herb Garden Co',
-          sellerDescription: 'Herb Garden Co grows a wide variety of culinary herbs using organic methods. We focus on flavor and freshness, ensuring you get the best herbs for your kitchen.',
-          location: 'Herb Garden, 12 miles away',
-          avgRating: 4.6
-        },
-        {
-          id: 5,
-          name: 'Grass-Fed Beef',
-          description: 'Premium beef from pasture-raised cattle',
-          longDescription: 'Our beef comes from cattle that graze on natural grass pastures year-round. This results in leaner, more flavorful meat that is higher in beneficial nutrients.',
-          price: 12.99,
-          unit: 'lb',
-          image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop',
-          category: 'Meat',
-          organic: false,
-          local: true,
-          fresh: true,
-          sellerId: 5,
-          sellerName: 'Prairie Ranch',
-          sellerDescription: 'Prairie Ranch raises cattle using traditional ranching methods. Our animals graze on natural grasslands and are never given growth hormones or unnecessary antibiotics.',
-          location: 'Prairie Ranch, 25 miles away',
-          avgRating: 4.9
-        },
-        {
-          id: 6,
-          name: 'Fresh Strawberries',
-          description: 'Sweet, ripe strawberries picked this morning',
-          longDescription: 'These strawberries are picked at peak ripeness for maximum sweetness and flavor. Grown without synthetic pesticides and delivered fresh to your door.',
-          price: 4.50,
-          unit: 'pint',
-          image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&h=400&fit=crop',
-          category: 'Fruits',
-          organic: true,
-          local: true,
-          fresh: true,
-          sellerId: 1,
-          sellerName: 'Green Valley Farm',
-          sellerDescription: 'Green Valley Farm has been growing organic produce for over 20 years. We believe in sustainable farming practices and providing the community with the freshest, most nutritious food possible.',
-          location: 'Green Valley, 15 miles away',
-          avgRating: 4.8
-        }
-      ]
-    }
+      isAuthenticated: false
+    };
   },
   mounted() {
-    const productId = parseInt(this.$route.params.id)
-    this.product = this.products.find(p => p.id === productId)
+    this.isAuthenticated = isAuthenticated();
+    const productId = this.$route.params.id;
+    watchProduct(productId, (product) => {
+      this.product = product;
+    });
   },
   methods: {
     increaseQuantity() {
-      this.quantity++
+      this.quantity++;
     },
     decreaseQuantity() {
       if (this.quantity > 1) {
-        this.quantity--
+        this.quantity--;
       }
     },
-    addToCart() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-      const existingItem = cart.find(item => item.id === this.product.id)
-      
-      if (existingItem) {
-        existingItem.quantity += this.quantity
-      } else {
-        cart.push({
-          id: this.product.id,
-          name: this.product.name,
-          price: this.product.price,
-          image: this.product.image,
-          quantity: this.quantity
-        })
+    async addToCart() {
+      if (!this.isAuthenticated) {
+        alert('Please log in to add items to your cart.');
+        return;
       }
-      
-      localStorage.setItem('cart', JSON.stringify(cart))
-      alert(`Added ${this.quantity} ${this.product.unit || 'item(s)'} to cart!`)
+      try {
+        const userId = getUserId();
+        await updateCartItemQuantity(userId, this.product, this.quantity);
+        alert(`Added ${this.quantity} ${this.product.unit || 'item(s)'} to cart!`);
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add to cart. Please try again.');
+      }
     }
   }
-}
+};
 </script>
 
 <style scoped>

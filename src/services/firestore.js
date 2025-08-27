@@ -77,8 +77,10 @@ export const getProductsByCategory = async (category) => {
 
 export const createCart = async (userId) => {
   try {
-    await addDoc(cartsCollection, {
-      userId,
+    // Use the userId as the document ID for the cart
+    const cartRef = doc(db, 'carts', userId);
+    await setDoc(cartRef, {
+      userId, // We can still store the userId in the document if needed
       createdAt: serverTimestamp(),
     });
     console.log("Cart created for user:", userId);
@@ -189,11 +191,10 @@ export const getSellerProducts = async (sellerId) => {
 // Cart Operations
 export const getCart = async (userId) => {
   try {
-    const q = query(cartsCollection, where('userId', '==', userId))
-    const querySnapshot = await getDocs(q)
-    
-    if (!querySnapshot.empty) {
-      const cartDocRef = doc(db, 'carts', querySnapshot.docs[0].id);
+    const cartDocRef = doc(db, 'carts', userId);
+    const cartSnap = await getDoc(cartDocRef);
+
+    if (cartSnap.exists()) {
       const itemsCollection = collection(cartDocRef, 'items');
       const itemsSnapshot = await getDocs(itemsCollection);
       return itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -207,21 +208,20 @@ export const getCart = async (userId) => {
 
 export const watchCart = (userId, callback) => {
   try {
-    const q = query(cartsCollection, where('userId', '==', userId));
-    return onSnapshot(q, (querySnapshot) => {
-      if (!querySnapshot.empty) {
-        const cartDocRef = querySnapshot.docs[0].ref;
-        const itemsCollection = collection(cartDocRef, 'items');
-        // Now listen to the items subcollection
-        return onSnapshot(itemsCollection, (itemsSnapshot) => {
-          const cartItems = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          callback(cartItems);
-        });
-      } else {
-        // Cart doesn't exist yet or was deleted
+    const cartDocRef = doc(db, 'carts', userId);
+    
+    // Listen to the items subcollection of the user's cart
+    const itemsCollection = collection(cartDocRef, 'items');
+    return onSnapshot(itemsCollection, (itemsSnapshot) => {
+      const cartItems = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(cartItems);
+    }, (error) => {
+        // If the cart document doesn't exist, it will throw an error.
+        // We can handle this by calling the callback with an empty array.
+        console.log("User cart not found, returning empty cart. This is expected if the user has no cart yet.");
         callback([]);
-      }
     });
+
   } catch (error) {
     console.error('Error watching cart:', error);
     throw error;
@@ -231,16 +231,12 @@ export const watchCart = (userId, callback) => {
 export const updateCartItemQuantity = async (userId, product, amount) => {
   try {
     console.log("update cart")
-    const q = query(cartsCollection, where('userId', '==', userId))
-    const querySnapshot = await getDocs(q)
+    const cartDocRef = doc(db, 'carts', userId);
     
-    let cartDocRef;
-
-    if (querySnapshot.empty) {
-      cartDocRef = doc(collection(db, 'carts'), userId);
-      await setDoc(cartDocRef, { userId });
-    } else {
-      cartDocRef = querySnapshot.docs[0].ref;
+    // We need to ensure the cart document exists before we can add items to it.
+    const cartSnap = await getDoc(cartDocRef);
+    if (!cartSnap.exists()) {
+        await setDoc(cartDocRef, { userId, createdAt: serverTimestamp() });
     }
     
     const itemRef = doc(collection(cartDocRef, 'items'), product.id);
@@ -250,7 +246,11 @@ export const updateCartItemQuantity = async (userId, product, amount) => {
       await deleteDoc(itemRef);
     } else {
       await setDoc(itemRef, { 
-        quantity: increment(amount)
+        quantity: increment(amount),
+        // also add product details to the cart item, this is better than having to fetch them separately
+        name: product.name,
+        price: product.price,
+        imageUrl: product.image || ''
         }, { merge: true });
     }
   } catch (error) {
@@ -262,17 +262,14 @@ export const updateCartItemQuantity = async (userId, product, amount) => {
 
 export const clearCart = async (userId) => {
   try {
-    const q = query(cartsCollection, where('userId', '==', userId))
-    const querySnapshot = await getDocs(q)
+    const cartDocRef = doc(db, 'carts', userId);
+    const itemsCollection = collection(cartDocRef, 'items');
+    const itemsSnapshot = await getDocs(itemsCollection);
     
-    if (!querySnapshot.empty) {
-      const cartDocRef = querySnapshot.docs[0].ref;
-      const itemsCollection = collection(cartDocRef, 'items');
-      const itemsSnapshot = await getDocs(itemsCollection);
-      itemsSnapshot.docs.forEach(async (itemDoc) => {
-        await deleteDoc(itemDoc.ref);
-      });
-    }
+    // No need to check if cart exists, if it doesn't, itemsSnapshot will be empty
+    itemsSnapshot.docs.forEach(async (itemDoc) => {
+      await deleteDoc(itemDoc.ref);
+    });
   } catch (error) {
     console.error('Error clearing cart:', error)
     throw error
