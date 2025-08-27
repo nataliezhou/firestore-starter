@@ -90,7 +90,7 @@
 </template>
 
 <script>
-import { getCart, clearCart, updateCartItemQuantity } from '../services/firestore'
+import { clearCart, updateCartItemQuantity, watchCart } from '../services/firestore'
 import { getUserId, isAuthenticated } from '../services/auth'
 import { incrementQuantity, decrementQuantity } from '../services/cart'
 
@@ -102,7 +102,8 @@ export default {
       deliveryFee: 5.99,
       loading: false,
       error: null,
-      isAuthenticated: false
+      isAuthenticated: false,
+      cartUnsubscribe: null
     }
   },
   computed: {
@@ -115,28 +116,23 @@ export default {
       return this.subtotal + this.deliveryFee
     }
   },
-  async mounted() {
+  mounted() {
     this.isAuthenticated = isAuthenticated()
     if (this.isAuthenticated) {
-      await this.loadCart()
+      this.loading = true;
+      const userId = getUserId()
+      this.cartUnsubscribe = watchCart(userId, (cartItems) => {
+        this.cartItems = cartItems;
+        this.loading = false;
+      });
+    }
+  },
+  unmounted() {
+    if (this.cartUnsubscribe) {
+      this.cartUnsubscribe();
     }
   },
   methods: {
-    async loadCart() {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const userId = getUserId()
-        this.cartItems = await getCart(userId)
-      } catch (error) {
-        this.error = 'Failed to load cart. Please try again.'
-        console.error('Error loading cart:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-    
     increaseQuantity(item) {
       incrementQuantity(item);
     },
@@ -150,11 +146,7 @@ export default {
     async removeItem(item) {
       try {
         const userId = getUserId()
-        await updateCartItemQuantity(userId, item) // Remove item
-        const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
-        if (index > -1) {
-          this.cartItems.splice(index, 1)
-        }
+        await updateCartItemQuantity(userId, item, -item.quantity)
       } catch (error) {
         alert('Failed to remove item. Please try again.')
         console.error('Error removing item:', error)
@@ -169,7 +161,6 @@ export default {
         // Clear cart after successful checkout
         const userId = getUserId()
         await clearCart(userId)
-        this.cartItems = []
       } catch (error) {
         console.error('Error clearing cart:', error)
       }

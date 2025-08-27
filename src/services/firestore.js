@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   doc, 
@@ -78,7 +79,7 @@ export const getProductsByCategory = async (category) => {
 export const createCart = async (userId) => {
   try {
     // Use the userId as the document ID for the cart
-    const cartRef = doc(db, 'carts', userId);
+    const cartRef = getCartDocRef(userId)
     await setDoc(cartRef, {
       userId, // We can still store the userId in the document if needed
       createdAt: serverTimestamp(),
@@ -189,9 +190,18 @@ export const getSellerProducts = async (sellerId) => {
 }
 
 // Cart Operations
+const cartDocRefs = {};
+const getCartDocRef = (userId) => {
+  if (!cartDocRefs[userId]) {
+    cartDocRefs[userId] = doc(db, 'carts', userId);
+  }
+  return cartDocRefs[userId];
+};
+
+
 export const getCart = async (userId) => {
   try {
-    const cartDocRef = doc(db, 'carts', userId);
+    const cartDocRef = getCartDocRef(userId)
     const cartSnap = await getDoc(cartDocRef);
 
     if (cartSnap.exists()) {
@@ -208,20 +218,18 @@ export const getCart = async (userId) => {
 
 export const watchCart = (userId, callback) => {
   try {
-    const cartDocRef = doc(db, 'carts', userId);
-    
-    // Listen to the items subcollection of the user's cart
+    const cartDocRef = getCartDocRef(userId);
     const itemsCollection = collection(cartDocRef, 'items');
+
     return onSnapshot(itemsCollection, (itemsSnapshot) => {
       const cartItems = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       callback(cartItems);
     }, (error) => {
-        // If the cart document doesn't exist, it will throw an error.
-        // We can handle this by calling the callback with an empty array.
-        console.log("User cart not found, returning empty cart. This is expected if the user has no cart yet.");
-        callback([]);
+      // This error handler is likely to be called if the user's cart document doesn't exist yet.
+      // Calling the callback with an empty array to signify an empty cart.
+      console.log("Watching cart resulted in an error, returning empty cart. This is expected if the user has no items.", error);
+      callback([]);
     });
-
   } catch (error) {
     console.error('Error watching cart:', error);
     throw error;
@@ -231,7 +239,7 @@ export const watchCart = (userId, callback) => {
 export const updateCartItemQuantity = async (userId, product, amount) => {
   try {
     console.log("update cart")
-    const cartDocRef = doc(db, 'carts', userId);
+    const cartDocRef = getCartDocRef(userId);
     
     // We need to ensure the cart document exists before we can add items to it.
     const cartSnap = await getDoc(cartDocRef);
@@ -262,7 +270,7 @@ export const updateCartItemQuantity = async (userId, product, amount) => {
 
 export const clearCart = async (userId) => {
   try {
-    const cartDocRef = doc(db, 'carts', userId);
+    const cartDocRef = getCartDocRef(userId)
     const itemsCollection = collection(cartDocRef, 'items');
     const itemsSnapshot = await getDocs(itemsCollection);
     
