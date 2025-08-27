@@ -228,43 +228,37 @@ export const watchCart = (userId, callback) => {
   }
 }
 
-export const updateCartItemQuantity = async (userId, product) => {
-  console.log("update cart item for user", userId, "product", product)
+export const updateCartItemQuantity = async (userId, product, amount) => {
   try {
+    console.log("update cart")
     const q = query(cartsCollection, where('userId', '==', userId))
     const querySnapshot = await getDocs(q)
     
     let cartDocRef;
 
     if (querySnapshot.empty) {
-      // Create a new cart document
       cartDocRef = doc(collection(db, 'carts'), userId);
       await setDoc(cartDocRef, { userId });
     } else {
-      // Get the existing cart document
       cartDocRef = querySnapshot.docs[0].ref;
     }
     
-    // Reference to the specific item in the subcollection
     const itemRef = doc(collection(cartDocRef, 'items'), product.id);
+    const itemSnap = await getDoc(itemRef);
 
-    if (product.quantity <= 0) {
+    if (itemSnap.exists() && itemSnap.data().quantity + amount <= 0) {
       await deleteDoc(itemRef);
     } else {
-
       await setDoc(itemRef, { 
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: product.quantity
-        });
+        quantity: increment(amount)
+        }, { merge: true });
     }
   } catch (error) {
     console.error('Error updating cart item:', error);
     throw error;
   }
 };
+
 
 export const clearCart = async (userId) => {
   try {

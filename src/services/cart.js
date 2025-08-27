@@ -6,17 +6,17 @@ export const incrementQuantity = async (product) => {
   const userId = getUserId();
   if (userId) {
     await updateProductStock(product.id, -1);
-    await updateCartItemQuantity(userId, product);
+    await updateCartItemQuantity(userId, product,1);
   }
 };
 
 export const decrementQuantity = async (product) => {
-  if (product.quantity >= 1) {
+  if (product.quantity > 0) {
     product.quantity--;
     const userId = getUserId();
     if (userId) {
       await updateProductStock(product.id, 1);
-      await updateCartItemQuantity(userId, product);
+      await updateCartItemQuantity(userId, product,-1);
     }
   }
 };
