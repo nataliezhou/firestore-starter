@@ -13,7 +13,8 @@ import {
   orderBy,
   serverTimestamp,
   startAfter,
-  onSnapshot
+  onSnapshot,
+  increment
 } from 'firebase/firestore';
 
 
@@ -87,11 +88,10 @@ export const createCart = async (userId) => {
   }
 };
 
-export const updateProductStock = async (product) => {
+export const updateProductStock = async (productId, amount) => {
   try {
-    const productRef = doc(db, 'products', product.id);
-    await updateDoc(productRef, { stock: product.stock });
-    console.log("updated product in firestore with stock: ", product.stock)
+    const productRef = doc(db, 'products', productId);
+    await updateDoc(productRef, { stock: increment(amount) });
   } catch (error) {
     console.error('Error updating product stock:', error);
     throw error;
@@ -227,78 +227,6 @@ export const watchCart = (userId, callback) => {
     throw error;
   }
 }
-// deprecated
-// export const addToCart = async (userId, product) => {
-//   try {
-//     // Check product stock
-//     const productRef = doc(db, 'products', product.id);
-//     const productSnap = await getDoc(productRef);
-
-//     if (!productSnap.exists()) {
-//       throw new Error('Product not found.');
-//     }
-
-//     const productData = productSnap.data();
-//     let currentStock = productData.stock || 0;
-
-//     if (currentStock <= 0) {
-//       throw new Error('Product is out of stock.');
-//     }
-
-//     // Add to user's cart
-//     const q = query(cartsCollection, where('userId', '==', userId))
-//     const querySnapshot = await getDocs(q)
-    
-//     if (querySnapshot.empty) {
-//       // Create new cart
-//       await addDoc(cartsCollection, {
-//         userId,
-//         items: [{
-//           id: product.id,
-//           name: product.name,
-//           price: product.price,
-//           image: product.image,
-//           quantity: 1
-//         }],
-//         createdAt: serverTimestamp()
-//       })
-//     } else {
-//       // Update existing cart
-//       const cartDoc = querySnapshot.docs[0]
-//       const cartData = cartDoc.data()
-//       const existingItem = cartData.items.find(item => item.id === product.id)
-      
-//       if (existingItem) {
-//         existingItem.quantity += 1
-//       } else {
-//         cartData.items.push({
-//           id: product.id,
-//           name: product.name,
-//           price: product.price,
-//           image: product.image,
-//           quantity: 1
-//         })
-//       }
-      
-//       await updateDoc(doc(db, 'carts', cartDoc.id), {
-//         items: cartData.items,
-//         updatedAt: serverTimestamp()
-//       })
-//     }
-
-//     // Decrement product stock
-//     const newStock = currentStock - 1;
-//     if (newStock === 0) {
-//       await deleteDoc(productRef);
-//     } else {
-//       await updateDoc(productRef, { stock: newStock });
-//     }
-
-//   } catch (error) {
-//     console.error('Error adding to cart:', error)
-//     throw error
-//   }
-// }
 
 export const updateCartItemQuantity = async (userId, product) => {
   console.log("update cart item for user", userId, "product", product)
