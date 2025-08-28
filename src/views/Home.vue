@@ -2,7 +2,7 @@
   <div class="home">
     <div class="hero">
       <h1>Fresh Local Food</h1>
-      <p>Support local farmers, bakers, and artisans in your community</p>
+      <p>Support Bay Area local farmers, bakers, and artisans</p>
     </div>
 
     <div class="filters mb-4">
