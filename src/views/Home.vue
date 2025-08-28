@@ -99,7 +99,7 @@
 
 <script>
 import { filterProducts, watchProduct } from '../services/firestore';
-import { incrementQuantity, decrementQuantity } from '../services/cart';
+import { incrementQuantity, decrementQuantity, getCart, watchCart } from '../services/cart';
 import { isAuthenticated, getUserId, onAuthStateChange } from '../services/auth';
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/antd.css';
@@ -123,12 +123,19 @@ export default {
       priceRange: [0, 25],
       maxPriceValue: 25,
       minRating: 0,
+      cartUnwatch: null,
     };
   },
   async mounted() {
     this.isAuthenticated = isAuthenticated()
     onAuthStateChange((user) => {
       this.isAuthenticated = !!user;
+      if (this.isAuthenticated) {
+        this.setupCartWatcher();
+      } else if (this.cartUnwatch) {
+        this.cartUnwatch();
+        this.cart = [];
+      }
     });
     await this.applyFilters() // Load all products initially
   },
@@ -139,8 +146,25 @@ export default {
         delete this.productListeners[productId];
       }
     }
+    if (this.cartUnwatch) {
+      this.cartUnwatch();
+    }
   },
   methods: { 
+    async setupCartWatcher() {
+      this.cart = await getCart();
+      this.updateProductQuantities();
+      this.cartUnwatch = watchCart((cart) => {
+        this.cart = cart;
+        this.updateProductQuantities();
+      });
+    },
+    updateProductQuantities() {
+      this.filteredProducts.forEach(product => {
+        const cartItem = this.cart.find(item => item.id === product.id);
+        product.quantity = cartItem ? cartItem.quantity : 0;
+      });
+    },
     async handleCategoryFilter(category) {
       this.selectedCategory = category;
       await this.applyFilters();
@@ -181,6 +205,8 @@ export default {
           quantity: 0
         }));
 
+        this.updateProductQuantities();
+
         this.filteredProducts.forEach(product => {
           if (!this.productListeners[product.id]) {
             this.productListeners[product.id] = watchProduct(product.id, (updatedProductData) => { 
@@ -210,10 +236,14 @@ export default {
       this.loading = false;
     },
     async incrementQuantity(product) {
+      product.quantity++;
       await incrementQuantity(product);
     },
     async decrementQuantity(product) {
-      await decrementQuantity(product);
+      if (product.quantity > 0) {
+        product.quantity--;
+        await decrementQuantity(product);
+      }
     }
 
   }
